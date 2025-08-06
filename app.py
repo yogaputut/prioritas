@@ -6,6 +6,8 @@ import geopandas as gpd
 import plotly.express as px
 import json
 import pandas as pd
+import requests
+import io
 
 # --- 1. FIELD ALIAS DICTIONARY ---
 field_alias = {
@@ -25,11 +27,18 @@ field_alias = {
     "Indeks_Tot": "Indeks Total Pendidikan",
     "Ranking": "Ranking"
 }
-# 1. Load data GeoJSON + simplify geometry
-gdf = gpd.read_file("data/peta_sr.geojson")
+
+# --- 1. LOAD DATA GEOJSON DARI GOOGLE DRIVE ---
+# Ganti dengan ID file kamu sendiri!
+url = "https://drive.google.com/file/d/15o23_u56048edFmDE-6vaomGJiT9SB3a/view?usp=sharing"
+
+response = requests.get(url)
+gdf = gpd.read_file(io.BytesIO(response.content))
+
 gdf["id"] = gdf.index.astype(str)
-gdf['geometry'] = gdf['geometry'].simplify(0.01)
+gdf['geometry'] = gdf['geometry'].simplify(0.01)  # jika ingin lebih ringan, bisa naikkan jadi 0.05
 geojson = json.loads(gdf.to_json())
+
 
 numeric_cols = [col for col in field_alias.keys() if col in gdf.columns and pd.api.types.is_numeric_dtype(gdf[col])]
 default_field = numeric_cols[0] if numeric_cols else None
@@ -146,3 +155,4 @@ def update_table(selected_field, search):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
